@@ -1,0 +1,48 @@
+import { expect, test, vi } from 'vitest'
+import './Button'
+
+// Fast component unit tests, real DOM (vitest browser mode). Complements the story play() tests.
+// Web Components render into a shadow root — query through it.
+
+function mount(attrs: Record<string, string> = {}, label = 'Save') {
+  const el = document.createElement('app-button')
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v)
+  el.textContent = label
+  document.body.append(el)
+  return el as HTMLElement & { shadowRoot: ShadowRoot }
+}
+
+async function tick(el: Element) {
+  await (el as unknown as { updateComplete: Promise<unknown> }).updateComplete
+}
+
+test('renders its slotted label', async () => {
+  const el = mount()
+  await tick(el)
+  expect(el.shadowRoot.querySelector('button')).toBeTruthy()
+  expect(el.textContent).toBe('Save')
+})
+
+test('fires app-click when enabled', async () => {
+  const el = mount()
+  await tick(el)
+  const onClick = vi.fn()
+  el.addEventListener('app-click', onClick)
+  el.shadowRoot.querySelector('button')!.click()
+  expect(onClick).toHaveBeenCalledOnce()
+})
+
+test('does not fire when disabled', async () => {
+  const el = mount({ disabled: '' })
+  await tick(el)
+  const onClick = vi.fn()
+  el.addEventListener('app-click', onClick)
+  el.shadowRoot.querySelector('button')!.click()
+  expect(onClick).not.toHaveBeenCalled()
+})
+
+test('marks aria-busy when loading', async () => {
+  const el = mount({ loading: '' })
+  await tick(el)
+  expect(el.shadowRoot.querySelector('button')!.getAttribute('aria-busy')).toBe('true')
+})

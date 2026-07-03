@@ -99,6 +99,8 @@ Load `tdd-loop` as reference context. Walk the loop:
 
 Stack-specific commands come from the `stack` skill's cartridge matching `.ffflow/config.yaml stack:`.
 
+**UI work (stack includes `typescript-ui`): the loop is component-first.** Load `component-driven-ui` as reference context. The ordering is a discipline, and at L2+ a gate: decompose the change into components → build each presentational component in isolation → write its story (a vignette per reasonable state) and component test as the "red" → green → assemble upward → **only then** write the container that wires it into the app. Do not import a component into app/container code until its story and test are green (the `ui` audit cartridge enforces this in Phase 4). The story's `play()` interaction test and the component unit test are the tests you write in step 1.
+
 ### Phase 3 — Spec update
 
 Update the evergreen spec to reflect the new behavior. This commit goes in the same PR as the implementation.
@@ -113,8 +115,8 @@ Run level-appropriate gates:
 
 - **L0**: lint, format, tests.
 - **L1**: above + `/audit --type claude-md` (if any docs changed).
-- **L2**: above + `/audit --type spec` for files in scope + `/audit --type char-tests` if any characterization tests are pinned to this spec.
-- **L3**: full quality gates per `quality-gates`: structure / correctness / coverage / maintainability, including mutation testing for the touched scope.
+- **L2**: above + `/audit --type spec` for files in scope + `/audit --type char-tests` if any characterization tests are pinned to this spec. **UI stacks:** + `/audit --type ui` (story presence, dependency rule, token conformance, no-unproven-app-import) + `just test-stories`.
+- **L3**: full quality gates per `quality-gates`: structure / correctness / coverage / maintainability, including mutation testing for the touched scope. **UI stacks:** `/audit --type ui` blocking at full strictness (story-coverage threshold, token conformance) + optional visual regression.
 
 If any gate fails after honest attempts, mark the PR as draft and surface the failures in the PR body.
 

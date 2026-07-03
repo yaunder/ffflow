@@ -1,0 +1,18 @@
+{
+  "devDependencies": {
+    "storybook": "^8.3",
+    "@storybook/web-components-vite": "^8.3",
+    "@storybook/addon-essentials": "^8.3",
+    "@storybook/addon-interactions": "^8.3",
+    "@storybook/addon-a11y": "^8.3",
+    "@storybook/test-runner": "^0.19",
+    "@vitest/browser": "^2.0",
+    "playwright": "^1.47",
+    "style-dictionary": "^4.1",
+    "vite": "^5.4"
+  },
+  "dependencies": {
+    "lit": "^3.2",
+    "@awesome.me/webawesome": "^3.0"
+  }
+}

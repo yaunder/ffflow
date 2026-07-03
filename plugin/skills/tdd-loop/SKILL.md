@@ -53,6 +53,17 @@ The discipline is the same; what counts as a "test" varies.
 - Spec: `.feature` files with full RID traceability, plus property-based scenarios where `@property-based` is tagged.
 - Refactor target: as L2, plus reducing complexity to meet `quality-gates` maintainability thresholds.
 
+### UI components (story-driven variant — stack includes `typescript-ui`)
+
+For presentational UI, the loop is **story-driven** (see `component-driven-ui`). The "red" is the story + component test:
+
+1. Write the story covering the reasonable states (empty/loading/error/populated/edge) and a `play()` interaction test + a component unit test.
+2. Run them. Red — the component doesn't exist or doesn't handle the state yet.
+3. Build the presentational component (props in, events out, token-driven styling) until green.
+4. Refactor under green; assemble upward into the next tier and story/test *that*.
+
+The component is proven in isolation this way *before* any container imports it. Composes with the level above: at L2+ the story's interaction test is the acceptance layer for the component; unit tests pin inner correctness.
+
 ## Red discipline
 
 If your test passes the first time:

@@ -30,6 +30,7 @@ Loaded by `work-issue` at Phase 5.
 | **Spec review** | Re-read prose section | + hexagonal layer notes | Re-read Rule + scenarios; check annotations | + RID coverage, property-test ranges |
 | **Code review** | Clarity / correctness / maintainability / hygiene / tech-debt discipline | + port/adapter cleanliness | + step definitions bound | + complexity within budget, no 0% mutation funcs |
 | **Verification** | lint + format + tests + coverage + `/audit --type tech-debt` clean | + `/audit --type claude-md` clean | + `/audit --type spec` + `/audit --type char-tests` | + full `quality-gates`, mutation score |
+| **UI review** (UI stacks only) | Presentational/container split; no data in components | + stories for key states; token-driven styling | + `/audit --type ui` clean; no unproven app import | + story-coverage + token conformance gated |
 
 The phase ordering is the same at every level; the checklist scales.
 
@@ -70,6 +71,13 @@ Review as if someone else wrote it.
 - No leftover `console.log` / `print` / debug.
 - No commented-out code.
 - No magic numbers, no hardcoded values that should be config.
+
+**View-layer purity (UI stacks — `typescript-ui`; see `component-driven-ui`)**
+- Presentational components take props and emit events — no fetch, store access, or app-model types in their props.
+- New components have stories covering their *reasonable states* (empty/loading/error/populated/edge/overflow), not just the happy path.
+- No component imported into app/container code without a green story **and** test (the ordering rule).
+- Styling comes from design tokens — no raw hex/px bypassing the language.
+- At L2+, confirm `/audit --type ui` is clean and `just test-stories` passes.
 
 **Review-time discipline (`zero-tech-debt` + `yagni`)**
 

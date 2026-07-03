@@ -39,6 +39,7 @@ These shape every skill. Full text in [`docs/architecture.md`](docs/architecture
 6. **Red/Green TDD is the execution discipline.** Spec → red → green → refactor → spec update → gates → PR. Same loop at every level.
 7. **Naming convention: memorable prefix first.** `/audit --type claude-md`, not `claude-md-audit`. `plan-chat`, not `chat-for-planning`. Optimize for what a tired developer types.
 8. **Skills only.** No commands. No agents. No MCP servers. Every entry point is a skill.
+9. **View-layer purity — hexagonal, rotated onto the view.** The component layer is the frontend's domain: pure, presentational, storied and tested in isolation with zero model/logic/backend dependency. The app is the adapter. Dependencies point view ← app, never the reverse. Decompose → story → test → *then* integrate. Rulebook: `component-driven-ui`; toolchain: `typescript-ui` stack cartridge; gate: `/audit --type ui`. Full text in `docs/architecture.md` §2.9.
 
 ## Plugin layout
 

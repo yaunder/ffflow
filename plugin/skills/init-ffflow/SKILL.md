@@ -46,6 +46,7 @@ That's it. Notably **not** outputs:
 - Detect language by file signals:
   - `pyproject.toml` or `*.py` → propose `stack: python`.
   - `package.json` with TS deps or `tsconfig.json` → propose `stack: typescript`.
+    - **UI signal present** → propose `stack: typescript-ui` instead (the view-layer-purity toolchain, §2.9). UI signals: `react` / `react-dom`, `lit`, `@awesome.me/webawesome` (or legacy `@shoelace-style/shoelace`), `vue`, `svelte`, `@storybook/*`, or a `.storybook/` directory. When proposing `typescript-ui`, also propose a lane (`ui_baseline`) — `react` if a React signal, `web-components` if a Lit/Web-Awesome signal; ask if ambiguous or both present.
   - `pom.xml` or `build.gradle` → propose `stack: java`.
   - `Cargo.toml` or `*.rs` → propose `stack: rust`.
   - Multiple language signals → propose `stack: polyglot`.
@@ -92,13 +93,23 @@ Accept (a), edit a field (e), or abort (x)?
 
 Default level is **L1** (light hexagonal layering + defect-driven specs, no Gherkin or RIDs yet). L0 is a deliberate downgrade choice; L2/L3 are deliberate upgrades.
 
+**When the stack is `typescript-ui`,** also write the chosen lane to `.ffflow/stack.yaml` (the UI cartridge reads `ui_baseline` from there, not from `config.yaml`):
+
+```yaml
+extends: typescript-ui
+dimensions:
+  ui_baseline: react          # or: web-components
+```
+
+Mention in the confirmation that view-layer purity (§2.9) is now in effect — the sibling of hexagonal for the frontend — and that `/stack-init` will scaffold Storybook + tokens + the sample component triple.
+
 When the user picks L2 or L3, flip the corresponding entries in `features:` automatically:
 - L2: `property_based_testing: true`
 - L3: all four feature flags on
 
 ### 2a. Honor the cartridge's `max_level`
 
-Before writing the config, check the chosen stack cartridge for a `max_level:` declaration. All current cartridges — `typescript`, `python`, `java`, `rust` — declare `max_level: L3`. Every supported stack reaches every level.
+Before writing the config, check the chosen stack cartridge for a `max_level:` declaration. All current cartridges — `typescript`, `typescript-ui`, `python`, `java`, `rust` — reach `max_level: L3` (`typescript-ui` inherits its base's). Every supported stack reaches every level.
 
 specdrive (the L3 RID-traceability tool) is a **language-agnostic CLI**: it audits Gherkin `.feature` files and JUnit XML, not your source, and is distributed on npm. So L3 on a Python/Java/Rust project just needs Node/npm available to run `npx specdrive` — there is no PyPI / Maven Central / crates.io requirement, and no reason to cap these stacks at L2. (`stack-init` checks for `npx` at L3 and prompts to install Node if it's missing.)
 

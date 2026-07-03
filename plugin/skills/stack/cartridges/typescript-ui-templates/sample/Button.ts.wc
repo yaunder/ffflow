@@ -1,0 +1,48 @@
+import { LitElement, html, css, nothing } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
+
+// PRESENTATIONAL atom, Web Components lane. A custom element + Shadow DOM is a hard,
+// platform-level purity seal: this element cannot see the app's store/fetch/router.
+// Props (attributes/properties) in, events out. Styling comes from design tokens exposed
+// as CSS custom properties, which pierce the shadow boundary by design.
+
+@customElement('app-button')
+export class AppButton extends LitElement {
+  @property() variant: 'primary' | 'secondary' | 'danger' = 'primary'
+  @property({ type: Boolean }) loading = false
+  @property({ type: Boolean }) disabled = false
+
+  static styles = css`
+    button {
+      background: var(--color-primary);
+      color: var(--color-primary-fg);
+      padding: var(--space-sm) var(--space-lg);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-md);
+    }
+    button[disabled] { opacity: 0.5; cursor: not-allowed; }
+    :host([variant='secondary']) button { background: var(--color-border); color: var(--color-fg); }
+    :host([variant='danger']) button { background: var(--color-danger); }
+  `
+
+  private onClick(e: Event) {
+    if (this.disabled || this.loading) {
+      e.stopImmediatePropagation()
+      return
+    }
+    this.dispatchEvent(new CustomEvent('app-click', { bubbles: true, composed: true }))
+  }
+
+  render() {
+    return html`
+      <button
+        ?disabled=${this.disabled || this.loading}
+        aria-busy=${this.loading ? 'true' : nothing}
+        @click=${this.onClick}
+      >
+        <slot></slot>
+      </button>
+    `
+  }
+}

@@ -1,0 +1,14 @@
+import type { StorybookConfig } from '@storybook/web-components-vite'
+
+// Web Components lane (Lit + Web Awesome). Stories are the visual catalog of every reasonable state.
+const config: StorybookConfig = {
+  stories: ['../src/components/**/*.stories.@(ts|js)'],
+  addons: [
+    '@storybook/addon-essentials',
+    '@storybook/addon-interactions', // play() functions = interaction tests
+    '@storybook/addon-a11y', // accessibility checks across the story set (L2+)
+  ],
+  framework: { name: '@storybook/web-components-vite', options: {} },
+}
+
+export default config

@@ -66,6 +66,8 @@ A good chess move is:
 - **Red/green-able.** A test can be written that fails before the code is written, and passes after.
 - **One behavior.** Adds or modifies one Rule (L2+) or one prose spec section (L0/L1).
 
+**UI work (stack includes `typescript-ui`): decompose component-first.** Per `component-driven-ui`, a feature with a UI splits so the presentational components come *before* the container that wires them. Earlier tasks build and prove atoms/molecules/organisms (component + story + test); a later task integrates the proven components into the app. A task that wires an unbuilt component into app code is mis-scoped — split the component out. The "no app import before proven" ordering becomes a task dependency: the integration task `depends on` the component tasks.
+
 Propose 3–8 tasks. Present them to the user as a short list:
 
 ```

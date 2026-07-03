@@ -98,6 +98,21 @@ When in doubt, optimize for: what would a tired developer type when they want th
 
 No commands. No agents. No MCP servers. Every entry point is a skill. Skills can call other skills via the Skill tool. Skills can launch agents via the Agent tool for parallel work — but the agent is invoked by the skill, not defined as part of the plugin's API.
 
+### 2.9 View-layer purity — the frontend sibling of hexagonal
+
+The hexagonal dependency rule (§ the `hexagonal-architecture` rulebook) is not a backend-only idea. Rotated onto the view, it becomes FFFlow's UI philosophy:
+
+**The component layer is the frontend's domain.** It is pure and presentational — built, storied, and tested in complete isolation, with **zero dependency on model, logic, or backend**. The app wiring (data fetching, state, routing, use-case calls) is the *adapter*: it plugs data into components that were already proven on their own. Dependencies point **view ← app**, never the reverse. A presentational component that imports from `app/`, `api/`, or `store/` is the frontend equivalent of a `PostgresConnection` leaking into a domain entity — forbidden.
+
+Four consequences, which the `component-driven-ui` rulebook makes concrete:
+
+1. **A design language of components.** Components consume design tokens (color, spacing, type), never raw literals. FFFlow prescribes a default baseline (Radix headless primitives + a token layer + shadcn-style *owned* components), overridable in `.ffflow/stack.yaml`.
+2. **Stories as vignettes of state.** Every atom, molecule, organism, and layout gets Storybook stories covering its *reasonable states* — empty, loading, error, populated, edge, disabled, dark/RTL, overflow, long-i18n. A component's stories are the visual catalog of every state we expect it to reach.
+3. **Fast tests, near-total coverage.** Storybook interaction tests plus fast component unit tests run on every build. The bar rises with level, reaching near-100% at L3.
+4. **Decompose → story → test → *then* integrate.** A feature is decomposed into components; each is storied and tested in isolation; they are assembled upward to the point of app assembly and tested there; **only then** does anything touch the app's own TS files. This ordering forces UI to be designed divorced from the backend — the whole point of the rule.
+
+Like hexagonal, this is a **dial, not an absolute** (§2.4): encouraged at L0, recommended at L1, CI-enforced at L2, blocking with coverage + token-conformance gates at L3. Enforced by `/audit --type ui`; the ordering gate lives in `work-issue`.
+
 ---
 
 ## 3. Plugin Layout
@@ -132,6 +147,7 @@ ffflow-plugin/                         # repo root (also the marketplace)
         ├── tdd-loop/                  # The red/green/refactor discipline
         ├── writing-specs/             # L2+ Gherkin conventions
         ├── hexagonal-architecture/    # L1+ architectural reference
+        ├── component-driven-ui/       # L1+ view-layer purity reference (UI sibling of hexagonal)
         ├── spec-first-development/    # L2+ TDD-with-specs discipline
         ├── defect-driven-specification/ # L1+ bug-becomes-spec discipline
         ├── contract-enforcement/      # L2+ mocks-vs-real-contracts
@@ -155,7 +171,7 @@ ffflow-plugin/                         # repo root (also the marketplace)
         └── adopt-ffflow/              # Greenfield/brownfield onboarding
 ```
 
-36 skills total (cartridges fold variants like capture backends and stack languages into one entry per family). Built in phases (see §10).
+37 skills total (cartridges fold variants like capture backends, stack languages, and audit types into one entry per family). Built in phases (see §10). `component-driven-ui` is the view-layer sibling of `hexagonal-architecture`; its toolchain lives in the `typescript-ui` stack cartridge and its keep-honest gate in the `ui` audit cartridge.
 
 ---
 
@@ -492,6 +508,7 @@ For each skill: purpose, inputs, outputs, dependencies (other skills it loads), 
 - `cartridges/architecture.md` — architectural conformance via static analysis. Hexagonal defaults from `hexagonal-architecture`.
 - `cartridges/refactor.md` — complexity, LoC, duplication, hot spots, test health. Folds in parts of aug-just's `justfile-quality-patterns`.
 - `cartridges/rid.md` (L3 only) — wraps `specdrive audit` for RID coverage, unbound scenarios, orphaned step definitions, mutation scores.
+- `cartridges/ui.md` — view-layer purity (§2.9). Flags components imported into app code without a story, stories without interaction tests, uncovered states/variants, presentational components importing from `app/`/`api/`/`store/`, and raw hex/px literals bypassing design tokens. Advisory at L0/L1, blocking at L2/L3. Applies only when the project's stack includes a UI cartridge.
 
 **Implementation notes:**
 - Coordinator does no auditing itself. Dispatch + aggregate + render only.
@@ -506,6 +523,7 @@ These are loaded as context by the workflow skills based on level. Not invoked d
 
 - `writing-specs` — L2+. Gherkin 6 conventions, Rule structure, scenario shape, annotation tags.
 - `hexagonal-architecture` — L1+. Layer boundaries, ports/adapters, dependency direction.
+- `component-driven-ui` — L1+. View-layer purity (§2.9): presentational vs. connected components, the atoms→molecules→organisms→layouts ladder, story-as-vignette doctrine, design-token layer, and the decompose→story→test→integrate ordering. Loaded by `plan-chat`, `work-issue`, and `/audit --type ui`.
 - `spec-first-development` — L2+. The red-green-audit loop with specs.
 - `defect-driven-specification` — L1+. Every bug becomes a spec entry before a fix.
 - `contract-enforcement` — L2+. Mocks must be anchored to verifiable contracts.
@@ -520,6 +538,7 @@ One skill (`stack`) with per-language cartridges, plus two operator skills.
 - `stack` — Reference for the FFFlow dimension model + cartridges under `cartridges/` for each language:
   - `cartridges/python.md` — uv, ruff, mypy, pytest, coverage.py thresholds, mutmut for mutation testing.
   - `cartridges/typescript.md` — pnpm, prettier, eslint, vitest, c8/istanbul thresholds, Stryker.
+  - `cartridges/typescript-ui.md` — extends `typescript`. The prescriptive web-UI toolchain for view-layer purity (§2.9): design tokens (style-dictionary → CSS vars); Storybook; fast component + interaction tests; a11y and (L3) visual-regression checks; `just storybook` / `test-stories` recipes folded into `check-all`. Blesses **two baselines under one rulebook**, selectable in `.ffflow/stack.yaml`: the **React** lane (prescribed default — Radix headless primitives + shadcn-style *owned* components, concrete templates) and the **Web Components** lane (**Web Awesome**, the Lit-based successor to Shoelace — a natively-themeable kit with a Shadow-DOM purity seal). Both are first-class Storybook renderers. Server-rendered-fragment stacks (htmx) are a *different paradigm*, not this lane: they keep view-layer purity via pure-template + fragment-contract tests, not Storybook, and are scoped out of the story gates (see `component-driven-ui`).
   - `cartridges/java.md` — Maven, JUnit 5, Spotless, SpotBugs, JaCoCo.
   - `cartridges/rust.md` — cargo, rustfmt, clippy, cargo-nextest, cargo-llvm-cov, cucumber-rs + proptest at L2+, cargo-mutants at L3.
   - `cartridges/polyglot.md` — Multi-language orchestration via root justfile; per-subproject `level_override` allowed.

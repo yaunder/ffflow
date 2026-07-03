@@ -20,6 +20,7 @@ audit                            Coordinator skill. Dispatch + aggregate + rende
     ├─ char-tests.md             Characterization tests still passing
     ├─ architecture.md           No drift from declared architecture
     ├─ refactor.md               Complexity, LoC, duplication, hot spots
+    ├─ ui.md        (UI stacks)  View-layer purity: story presence, dependency rule, tokens
     └─ rid.md       (L3 only)    Wraps specdrive audit
 ```
 
@@ -46,8 +47,8 @@ Small fixes auto-resolve (e.g., one stale CLAUDE.md → regenerate). Large fixes
 ## Per-level applicability
 
 - **L0** — `/audit --type claude-md` only (if CLAUDE.md exists), `/audit --type refactor` (basic)
-- **L1** — + `/audit --type architecture`
-- **L2** — + `/audit --type spec`, + `/audit --type char-tests`
+- **L1** — + `/audit --type architecture`; + `/audit --type ui` (advisory) if the stack includes a UI cartridge
+- **L2** — + `/audit --type spec`, + `/audit --type char-tests`; `/audit --type ui` becomes blocking on UI stacks
 - **L3** — + `/audit --type rid` (wraps specdrive)
 
 ## See also

@@ -132,6 +132,27 @@ Add spec tests + spec coverage to gates 2 and 3:
         run: pnpm vitest run specs --coverage --coverage.lines=80
 ```
 
+## Template additions (UI stacks — `typescript-ui`)
+
+When the stack includes `typescript-ui`, add component/interaction tests and the view-layer-purity audit to the PR gates (L2+). Storybook builds are cacheable; `test-storybook` runs against the built stories.
+
+```yaml
+      - name: Build design tokens
+        run: just tokens
+
+      - name: Build Storybook
+        run: just build-storybook
+
+      - name: Component + interaction tests
+        run: just test-stories          # vitest browser mode + storybook-test-runner
+
+      - name: View-layer purity audit
+        run: /fff:audit --type ui --ci   # story presence, dependency rule, token conformance,
+                                         # no unproven app import; blocking at L2/L3
+```
+
+At L3, add `just test-visual` (visual regression against the built story set) if the project opted into it.
+
 ## Template additions (L3)
 
 Add mutation testing to gate 4 on a schedule (see `justfile` for the cadence rule — mutate is not in check-all; runs weekly here):

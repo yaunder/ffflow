@@ -1,0 +1,35 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { expect, test, vi } from 'vitest'
+import { Button } from './Button'
+
+// Fast component unit tests, real DOM (vitest browser mode). Complements the story play() tests:
+// stories catch interaction-in-context; these pin branch/edge behavior. Near-100% at L3.
+
+test('renders its label', () => {
+  render(<Button>Save</Button>)
+  expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument()
+})
+
+test('fires onClick when enabled', async () => {
+  const onClick = vi.fn()
+  render(<Button onClick={onClick}>Save</Button>)
+  await userEvent.click(screen.getByRole('button'))
+  expect(onClick).toHaveBeenCalledOnce()
+})
+
+test('does not fire when disabled', async () => {
+  const onClick = vi.fn()
+  render(
+    <Button disabled onClick={onClick}>
+      Save
+    </Button>,
+  )
+  await userEvent.click(screen.getByRole('button'))
+  expect(onClick).not.toHaveBeenCalled()
+})
+
+test('marks aria-busy when loading', () => {
+  render(<Button loading>Save</Button>)
+  expect(screen.getByRole('button')).toHaveAttribute('aria-busy', 'true')
+})

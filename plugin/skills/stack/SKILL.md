@@ -1,6 +1,6 @@
 ---
 name: stack
-description: FFFlow stack toolchain reference — dimensions (package manager, formatter, linter, test runner, coverage, mutation testing) and level-aware defaults. Cartridges for python, typescript, java, rust, and polyglot.
+description: FFFlow stack toolchain reference — dimensions (package manager, formatter, linter, test runner, coverage, mutation testing) and level-aware defaults. Cartridges for python, typescript, typescript-ui, java, rust, and polyglot.
 ---
 
 # stack
@@ -17,6 +17,7 @@ This skill is the reference for that model. Other skills (`stack-init`, `stack-a
 |---|---|---|
 | `python` | `cartridges/python.md` | `cartridges/python-templates/` |
 | `typescript` | `cartridges/typescript.md` | `cartridges/typescript-templates/` |
+| `typescript-ui` | `cartridges/typescript-ui.md` (extends `typescript`) | `cartridges/typescript-ui-templates/` |
 | `java` | `cartridges/java.md` | `cartridges/java-templates/` |
 | `rust` | `cartridges/rust.md` | `cartridges/rust-templates/` |
 | `polyglot` | `cartridges/polyglot.md` | `cartridges/polyglot-templates/` |
@@ -87,5 +88,5 @@ When `quality-gates` (or any other skill) needs to know a project's coverage thr
 ## Anti-patterns
 
 - Inventing a new dimension. The model is fixed; extending it means amending this skill.
-- Loading multiple cartridges. A project has one stack at a time (polyglot orchestrates subprojects, each with its own cartridge).
+- Loading multiple cartridges. A project has one stack at a time (polyglot orchestrates subprojects, each with its own cartridge). The one exception is an `extends:` cartridge like `typescript-ui`, which is loaded *on top of* its base (`typescript`) — the base's dimensions and recipes still apply, and the UI cartridge only adds.
 - Reading a cartridge's templates without reading the cartridge itself. Templates are scaffolding; the cartridge is the reference.

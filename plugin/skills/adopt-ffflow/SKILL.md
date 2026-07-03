@@ -1,6 +1,6 @@
 ---
 name: adopt-ffflow
-description: End-to-end onboarding for a new FFFlow project. Runs init-ffflow, stack-init, then hands off to plan-roadmap to phase out the work (greenfield or brownfield — roadmap figures out the right per-phase entry point).
+description: End-to-end onboarding for a new FFFlow project. Runs init-ffflow, stack-init, then hands off to plan-roadmap to phase out the work (greenfield or brownfield — roadmap figures out the right per-phase entry point). Use `--ui` to adopt FFFlow's view-layer-purity structure (the frontend sibling of hexagonal) on an already-adopted project.
 ---
 
 # adopt-ffflow
@@ -21,6 +21,7 @@ This skill **delegates**. It doesn't reimplement any step — it composes `init-
 - Current working directory.
 - Optional `--greenfield` or `--brownfield` to skip the detection prompt.
 - Optional `--vision-doc <path>` to pre-select the vision file the roadmap will read.
+- Optional `--ui` (with optional `--lane react|web-components`) to adopt the view-layer-purity structure on a project that's **already** on FFFlow. This is the "make our UI follow the ffflow structure, as a sibling to our hex discipline" verb — see "UI adoption mode" below.
 
 ## Outputs
 
@@ -81,6 +82,21 @@ Greenfield and brownfield share the same flow at this level — the divergence i
    - Brownfield (undertested): phase 1 = `characterize` the touched surface, then build phases on the characterized base.
 4. **Briefing**: report which tier-2 skill handles the first phase, and what `<plan-dir>/phases/phase-1.md` says the work is.
 
+## UI adoption mode (`--ui`)
+
+For a project **already on FFFlow** that wants to adopt view-layer purity (§2.9) — the frontend sibling of the hexagonal discipline the project already runs. This is the one-invocation path behind *"FFFlow is opinionated about UI; apply that structure here as a sibling to our hex religion."* Also triggered by that intent in natural language, not just the flag.
+
+This mode **delegates** just like the main flow — it composes existing skills, reimplements nothing:
+
+1. **Precondition check.** Confirm `.ffflow/config.yaml` exists (project is already adopted). If not, tell the user to run plain `/adopt-ffflow` first — UI purity sits *on top of* an adopted project, it doesn't bootstrap one.
+2. **Promote the stack to `typescript-ui`.** If `stack: typescript`, propose the switch to `stack: typescript-ui` and write the lane to `.ffflow/stack.yaml` (`ui_baseline: react | web-components`) — detected from `package.json` signals (React vs. Lit/Web Awesome), asked if ambiguous. If already `typescript-ui`, skip. Delegates to `/init-ffflow` (re-run, single-field diff). Non-TypeScript stacks: explain UI purity ships as the `typescript-ui` cartridge today and stop.
+3. **Scaffold the toolchain.** Run `/stack-init`. Idempotent and non-destructive — adds Storybook, browser-mode component tests, style-dictionary tokens, the justfile recipes, and the sample `Button` triple without touching existing components.
+4. **Baseline the existing UI.** Run `/audit --type ui --plan`. This is the heart of adoption: it inventories the current components against the philosophy — story-less components, presentational components reaching into `store`/`api`, raw hex/px bypassing tokens, app imports of unproven components — and converts the findings into a plan (`plan-breakdown → plan-capture → work-issue`). The plan *is* the migration backlog: each task storifies + tests one component to the standard.
+5. **State the sibling relationship.** In the briefing, name it explicitly: the project now enforces two purity disciplines — `hexagonal-architecture` on the backend (domain ← app ← infra) and `component-driven-ui` on the frontend (components ← containers ← app). Same dependency rule, same dial, same audit machinery. Point at `component-driven-ui` as the rulebook to read.
+6. **Right-size the gate.** Note the current level's UI enforcement (advisory at L0/L1, blocking at L2/L3) and offer to raise the level if the user wants the gates to bite now rather than after the backlog is worked.
+
+The result: the project is set up so *new* UI work self-enforces the ordering (via `work-issue`/`tdd-loop`/`self-review`, all already stack-aware), and *existing* UI has a concrete, prioritized plan to reach the standard — exactly parallel to how `characterize` backfills a spec safety net for legacy backend code.
+
 ## Briefing examples
 
 ### Greenfield, vision in `project.md`
@@ -118,6 +134,32 @@ Next: /characterize src/auth/  (reads <plan-dir>/oauth-rollout/phases/phase-1.md
 ```
 
 Don't sugar-coat. The user needs to know the scale.
+
+### UI adoption (`--ui`), existing React app already on FFFlow
+
+```
+✓ Stack promoted: typescript → typescript-ui (lane: react).
+✓ Wrote .ffflow/stack.yaml (ui_baseline: react).
+✓ Scaffolding added (Storybook, browser-mode vitest, style-dictionary tokens,
+  justfile: storybook/test-stories/tokens, sample Button triple). Existing
+  components untouched.
+✓ /audit --type ui --plan → 23 findings, planned as slug=ui-purity:
+    · 14 components with no story
+    · 5 presentational components importing from src/store or src/api
+    · 3 raw-color literals bypassing tokens
+    · 1 app import of an untested component
+
+View-layer purity is now a sibling to your hexagonal discipline:
+  backend:  domain ← application ← infrastructure   (hexagonal-architecture)
+  frontend: components ← containers ← app           (component-driven-ui)
+Same dependency rule, same L0–L3 dial, same audit machinery.
+
+Current level L1 → UI gate is ADVISORY. Raise to L2 to make /audit --type ui
+blocking and enforce "no app import of an unproven component" in work-issue.
+
+Next: /plan-breakdown  (reads the ui-purity plan) — then work the component
+      backlog like any other chess moves. Read component-driven-ui first.
+```
 
 ## Interactive points
 

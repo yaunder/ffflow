@@ -1,0 +1,14 @@
+import type { StorybookConfig } from '@storybook/react-vite'
+
+// React lane. Stories are the visual catalog of every reasonable component state.
+const config: StorybookConfig = {
+  stories: ['../src/components/**/*.stories.@(ts|tsx)'],
+  addons: [
+    '@storybook/addon-essentials',
+    '@storybook/addon-interactions', // play() functions = interaction tests
+    '@storybook/addon-a11y', // accessibility checks across the story set (L2+)
+  ],
+  framework: { name: '@storybook/react-vite', options: {} },
+}
+
+export default config
