@@ -23,6 +23,7 @@ Take one captured issue (or task file) from cold-start to a PR. The spec change 
 - A branch named per the task's `Branch:` field (typically `task/<plan-slug>/task-N-<short-title>`).
 - A PR (draft or ready, depending on local-validation results).
 - Spec updates committed in the same PR.
+- Module CLAUDE.md created or updated in the same PR when the change adds or reshapes a module.
 - Updated `.ffflow/audit.yaml` if any audited file is touched.
 
 ## Dependencies
@@ -108,6 +109,18 @@ Update the evergreen spec to reflect the new behavior. This commit goes in the s
 - L0/L1: edit prose. Cross-reference the task issue in the spec section's footer.
 - L2: update or add Rule / Scenarios in the `.feature` file.
 - L3: write RID-tagged scenarios; ensure RID uniqueness via `/audit --type rid` (deferred until Phase 4).
+
+### Phase 3a — Module CLAUDE.md
+
+**Did this change create a new module?** If so, it needs a CLAUDE.md, in this PR, for the same reason the spec update ships here: an artifact that lands later usually doesn't land at all.
+
+A "new module" is a directory that meets the `claude-md` cartridge's significance criteria — a top-level module dir, a new hexagonal layer, or a directory that this change pushed to ≥ 3 non-test files. Use those criteria; don't invent your own.
+
+- **New significant module** → write its CLAUDE.md (Purpose · Responsibilities · Key files · Dependencies · Public interface). Populate from what you just built, not from placeholder headings.
+- **Existing module whose CLAUDE.md you invalidated** — new public function, changed dependency direction, moved responsibility → update it.
+- **Neither** → skip. Most tasks skip this phase, and that's fine.
+
+Never treat adding a module CLAUDE.md as a new precedent to be flagged for the user. Hierarchical CLAUDE.md is an FFFlow invariant (§2.10) and it's stated in the project's own beliefs block. A repo that has only a root CLAUDE.md is behind on the convention, not defining one.
 
 ### Phase 4 — Gates
 

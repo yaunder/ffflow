@@ -137,6 +137,14 @@ The underlying error follows:
 
 Then show the tool's actual output. The hint short-circuits 30 minutes of debugging for users who don't know to check env vars.
 
+### 4b. Seed CLAUDE.md for scaffolding it created
+
+When this run created a directory that meets the `claude-md` cartridge's significance criteria — a spec directory, a `.storybook/`, a new source-layout skeleton, `.ffflow/` itself — seed a short CLAUDE.md in it. Two or three lines is the target: what lives here, and the rule that governs it.
+
+This is invariant §2.10 applied at the moment of creation. A directory scaffolded without its CLAUDE.md becomes an audit finding on the very next `/fff:audit --type claude-md` run; writing it now costs nothing and closes the loop.
+
+Don't seed for directories that already have one, and don't seed for directories this run didn't create — retrofitting existing coverage gaps belongs to `/fff:audit --type claude-md --fix`, not here.
+
 ### 5. Verify
 
 Run `just check-all`. Report results. If it fails, surface the failure clearly — don't claim success.
@@ -150,7 +158,8 @@ Run `just check-all`. Report results. If it fails, surface the failure clearly �
   pre-commit hook      installed
   pre-push hook        installed
   .github/workflows/ffflow-ci.yml  written
-  specs/               created
+  specs/               created (+ CLAUDE.md)
+  .ffflow/CLAUDE.md    seeded
 
 Verification: just check-all → PASS
 
@@ -182,6 +191,8 @@ Replaces the former `/justfile-init upgrade <pattern>` flow:
 - Installing CI workflows without confirming they don't conflict with existing CI.
 - Installing dependencies without running `dev-install`-style verification.
 - Treating missing `.ffflow/config.yaml` as a license to assume defaults. Tell the user to `init-ffflow` first.
+- Creating a significant directory and leaving it undocumented. Scaffolding a dir without seeding its CLAUDE.md just manufactures an audit finding for later (§2.10).
+- Retrofitting CLAUDE.md across directories this run didn't create. That's `/fff:audit --type claude-md --fix`.
 
 ## Friction addressed
 

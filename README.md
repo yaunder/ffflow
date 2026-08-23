@@ -49,7 +49,10 @@ Three artifacts. Three roles. Three locations.
 ```
 /fff:audit            Find drift. Find gaps.
 /fff:audit --plan     Convert findings into a plan. Then breakdown → capture → work.
+/fff:upgrade-ffflow   After updating the plugin: catch this repo up to the new version.
 ```
+
+Updating the plugin changes what FFFlow *believes*; it doesn't change what your repo *contains*. `/fff:upgrade-ffflow` closes that gap — it reads the `ffflow_version` stamped in `.ffflow/config.yaml`, walks the migration ledger, and applies whatever your project is missing. Projects adopted before 0.4.0 have no stamp; the skill infers their effective version from what's actually in the tree, then stamps it so it never has to guess again.
 
 ## Two-tier planning
 
@@ -100,6 +103,8 @@ Configure once in `.ffflow/config.yaml`; the right cartridge loads when needed.
 - [Levels explained](plugin/docs/levels.md) — the L0–L3 dial in detail
 - [Workflows](plugin/docs/workflows.md) — the lifecycle flows
 - [Audit subsystem](plugin/docs/audit.md) — the keep-honest layer
+- [Migration ledger](plugin/docs/migrations.md) — what `/fff:upgrade-ffflow` reads
+- [Changelog](CHANGELOG.md) — release history
 
 ## Status
 

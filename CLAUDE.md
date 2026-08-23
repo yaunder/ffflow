@@ -9,7 +9,9 @@ ffflow-plugin/
 ├── .claude-plugin/marketplace.json    # marketplace manifest (this repo as a marketplace)
 ├── plugin/                            # the actual plugin (source: "./plugin")
 │   ├── .claude-plugin/plugin.json     # plugin manifest
+│   ├── docs/migrations.md             # migration ledger read by /fff:upgrade-ffflow
 │   └── CLAUDE.md                      # plugin design (authoritative for skills)
+├── CHANGELOG.md                       # human-facing release history
 ├── README.md
 └── LICENSE
 ```
@@ -32,4 +34,17 @@ They track the same thing because there's one plugin in this marketplace. Keepin
 
 **Why bump at all?** Claude Code picks up the latest commit on plugin update regardless of the number — the version is the *human* signal that something changed (and what the update UI compares). A static version across a real change is a footgun; always bump.
 
-**Process:** bump the three fields → commit (include the bump in the same commit as the change) → push. No tags or release artifacts are required today; if that changes, document it here.
+## Every release updates two ledgers
+
+Versioning is only half the job. A release also has to tell **existing projects** what changed for them.
+
+1. **`CHANGELOG.md`** (repo root) — for humans. Every release gets an entry.
+2. **`plugin/docs/migrations.md`** — for `/fff:upgrade-ffflow`. Only **repo-affecting** releases get an entry: ones where an already-adopted project would be wrong or incomplete until something in it changes.
+
+The test: *"If I upgrade the plugin and change nothing in my repo, is my repo now inconsistent with FFFlow?"* Yes → migration entry required. New skill that only reads existing artifacts, or a bug fix in a skill's own logic → changelog only.
+
+**This is not optional bookkeeping.** The upgrade path is only as good as the ledger. A repo-affecting change shipped without a migration entry is invisible to every existing project forever — which is precisely the failure 0.4.0 exists to fix. Ledger entry schema and the full decision table live in `plugin/docs/migrations.md`.
+
+Migration entry ids are permanent: never rename or reuse one, because unstamped repos duck-type against the whole ledger from 0.1.0 forward.
+
+**Process:** bump the three fields → update `CHANGELOG.md` → add a `migrations.md` entry if repo-affecting → commit (include all of it in the same commit as the change) → push. No tags or release artifacts are required today; if that changes, document it here.

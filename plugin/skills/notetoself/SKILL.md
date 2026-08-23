@@ -34,7 +34,15 @@ The hash means:
 - The same project's notes always land at the same path.
 - A note survives `/clear`, session boundaries, and process restarts — but not host `/tmp` cleanup.
 
-If you need durability past `/tmp` cleanup, copy the note into the repo under `.ffflow/notes/` and reference it explicitly.
+**Never commit the note.** If you want it to survive `/tmp` cleanup, keep it out of version control: write it to a gitignored path (`.ffflow/notes/` is a reasonable choice **only** with `.ffflow/notes/` in `.gitignore` first), or somewhere outside the repo entirely.
+
+The note is *your* session state, not the project's. Committing it hands one developer's half-finished train of thought to everyone else on the team, where it reads as project truth. On any repo past one developer it is actively harmful:
+
+- Two people save notes for the same directory and overwrite each other's — the hashed path that prevents *project* collisions guarantees *person* collisions once the file is shared.
+- Merge conflicts in a file nobody meant to co-author, on every branch, forever.
+- A stale note becomes a confident, wrong briefing for a teammate who has no idea whose session it came from or when.
+
+If a note contains something that genuinely belongs to the project, that's a signal it was written in the wrong place. Promote the *content* — into the spec, `<plan-dir>/`, an issue, or a module CLAUDE.md — and leave the note transient.
 
 ## Mode: save
 
@@ -151,6 +159,7 @@ Default: no. Users sometimes want to refer back; deletion is opt-in.
 - Saving every five minutes "just in case." The skill is for handoffs, not journaling.
 - Writing the note in past tense (`"I did X"`). Use imperative for next steps so the resumer reads them as instructions.
 - Including secrets, tokens, or `.env` contents. The file is plaintext in `/tmp`.
+- **Committing the note, or advising anyone to.** Session state in version control trampling teammates is the single worst outcome this skill can produce. Durable ≠ shared: gitignore it, or promote its content to a real project artifact.
 - Auto-deleting on resume. Manual control; archaeology has value.
 - Treating `/notetoself` as a replacement for the project's plan/spec. The note is session-state; durable work-state belongs in `<plan-dir>/` or the spec.
 
@@ -163,4 +172,6 @@ Default: no. Users sometimes want to refer back; deletion is opt-in.
 | Audit state | `.ffflow/audit.yaml` | Project lifetime |
 | **Session handoff** | `/tmp/notetoself-<hash>.md` | Until you delete it or `/tmp` resets |
 
-`notetoself` is the *only* state of these scoped to a single session's continuity, not the project's durable record. Don't promote project decisions into the note; promote them into spec, config, or plan.
+Note the split: every row above the last is **project state, shared and committed**; the last row is **personal session state, never committed**. That line is the whole distinction, and it's why the note lives in `/tmp` by default rather than in the tree.
+
+`notetoself` is the *only* state of these scoped to a single session's continuity, not the project's durable record. Don't promote project decisions into the note; promote them into spec, config, or plan. And don't promote the *note itself* into the repo — see "File layout" above.

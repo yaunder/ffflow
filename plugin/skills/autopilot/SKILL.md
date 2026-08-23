@@ -41,7 +41,7 @@ Optional flags:
 
   Logs are transient (same `/tmp` + project-hash convention as `notetoself` and plan dirs). The durable record of unattended decisions is whatever the wrapped skill committed — code, spec changes, issues. The log is for spot-checking the autopilot's reasoning when something looks off.
 
-  If you want a log to survive `/tmp` cleanup (rare), pass `--decision-log <repo-relative-path>`.
+  If you want a log to survive `/tmp` cleanup (rare), pass `--decision-log <path>` — and **gitignore the destination**. A decision log is one session's reasoning by one developer; committing it has the same trampling failure mode as committing a `notetoself` note (see that skill's "File layout"). If the log holds something the *project* needs, promote that content into the spec, an issue, or the PR description — don't share the log.
 
 ## Dependencies
 
@@ -113,6 +113,7 @@ autopilot complete: <skill>
 
 ## Anti-patterns
 
+- Committing the decision log. It's per-session, per-developer reasoning — gitignore it or leave it in `/tmp`. Durable is not the same as shared.
 - Guessing based on popularity ("Jest is standard") instead of checking what's installed.
 - Introducing tools or patterns the project doesn't use.
 - Making architectural decisions that belong to the user.

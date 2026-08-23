@@ -1,13 +1,13 @@
 ---
 name: init-ffflow
-description: Bootstrap a project for FFFlow — write .ffflow/config.yaml, propose level/stack/capture. Idempotent.
+description: Bootstrap a project for FFFlow — write .ffflow/config.yaml, stamp the beliefs block into the root CLAUDE.md, propose level/stack/capture. Idempotent.
 ---
 
 # init-ffflow
 
 ## Purpose
 
-Stand up the minimum FFFlow scaffolding: one config file. Everything else (audit state, spec directory, justfile, hooks) gets created lazily by the skill that needs it.
+Stand up the minimum FFFlow scaffolding: one config file, plus the beliefs block that tells every future session in this repo what FFFlow holds non-negotiable. Everything else (audit state, spec directory, justfile, hooks) gets created lazily by the skill that needs it.
 
 ## Plan Mode
 
@@ -26,9 +26,12 @@ This skill does NOT invoke Plan Mode. Configuration writes are direct.
 
 ## Outputs
 
-- `.ffflow/config.yaml` written or updated.
+- `.ffflow/config.yaml` written or updated — including the `ffflow_version` stamp.
+- A managed **beliefs block** written into the project's root `CLAUDE.md` (created if absent), delimited by `<!-- ffflow:beliefs ... -->` markers.
 
-That's it. Notably **not** outputs:
+The beliefs block is the *one* deliberate exception to this skill's "don't write project files" rule, and §2.11 explains why it has to be: a downstream session reads its own project's CLAUDE.md, never the plugin's docs. A belief the plugin professes but the repo never states is not in effect. The exception is bounded — only the bytes between the markers are ever written.
+
+Notably **not** outputs:
 - No `.gitignore` edits. Plans live in `/tmp/ffflow-plans/<project-hash>/<slug>/`, not in the project tree.
 - No `.ffflow/audit.yaml` init. The first auditor to run creates it.
 - No starter spec directory. `plan-chat` and `characterize` create it on first use at the configured `spec_location`.
@@ -75,6 +78,7 @@ Then present the rest of the config:
 Proposed .ffflow/config.yaml:
 
   version: 1
+  ffflow_version: 0.4.0
   level: L1
   stack: typescript
   capture: github-issues
@@ -126,12 +130,47 @@ For **polyglot** stacks: each subproject inherits its own cartridge's max_level.
 
 ### 3. Write the config
 
-Write `.ffflow/config.yaml`. That's the entire write step.
+Write `.ffflow/config.yaml`, including `ffflow_version` (the current plugin version, read from the manifest) and `ffflow_upgraded` (today).
+
+### 3a. Stamp the beliefs block
+
+Write the managed block into the project's root `CLAUDE.md`. If no root CLAUDE.md exists, create one with a minimal purpose line above the block — an FFFlow project without a root CLAUDE.md is a contradiction (§2.10).
+
+**Placement:** after the file's opening purpose/overview section, before the first deep-detail section. High enough to be read; not so high it displaces the file's own introduction.
+
+**Idempotency:** if the markers already exist, replace only what's between them. Never touch a byte outside. If the markers are missing or malformed, rewrite the block whole.
+
+This is the canonical text. `upgrade-ffflow` refreshes it from here, so this block is the single source of truth — update it here and the upgrade path follows automatically:
+
+```markdown
+<!-- ffflow:beliefs v0.4.0 — managed by /fff:upgrade-ffflow. Edits inside this block are overwritten. -->
+## FFFlow beliefs
+
+This project runs [FFFlow](https://github.com/bryonjacob/ffflow-plugin). These are the non-negotiables — the rules you should not have to discover.
+
+- **Hierarchical CLAUDE.md.** Every significant module carries its own CLAUDE.md — a tree mirroring the module tree, not this root file alone. Adding one to a module that lacks it is *never* a new precedent; it is catching up to the norm. The root file stays a map; module-specific rules live with the module. A 2-line CLAUDE.md beats none. → `/fff:audit --type claude-md`
+- **Specs and tests move together.** A spec entry without a test is documentation; a test without a spec entry is opaque. Spec updates ship in the same PR as the implementation. → `/fff:work-issue`, `/fff:audit --type spec`
+- **Tech debt is marked or fixed, never deferred silently.** Fix nits in flight, or write `# TODO(re-evaluate when <trigger>): <action>`. "We'll get to it" without a code-level marker is not a plan. → `/fff:audit --type tech-debt`
+- **Red, then green — wherever it's practical.** Write the failing test first and drive it to green. The artifacts scale with the level; the loop doesn't. Some edges genuinely resist it (exploratory spikes, config/scaffolding, hard-to-harness I/O, a bug you can't reproduce yet). At those edges, say so out loud and note what you did instead — an acknowledged exception is fine, a silent one is how the discipline erodes. → `/fff:tdd-loop`
+- **Plans are transient, specs are evergreen, issues are transactional.** Three artifacts, three lifespans, three locations. Don't mix them.
+
+Level and stack are declared in `.ffflow/config.yaml`. Run `/fff:upgrade-ffflow` after updating the plugin.
+<!-- ffflow:beliefs end -->
+```
+
+**When the project's stack is a UI stack** (`typescript-ui`), add one more belief before the closing marker:
+
+```markdown
+- **View-layer purity.** Components are pure and presentational — no model, logic, or backend imports. Dependencies point view ← app, never the reverse. Decompose → story → test → *then* integrate. → `/fff:audit --type ui`
+```
+
+Keep the block short. A beliefs block that grows into a second architecture document stops being read, which defeats its entire purpose.
 
 ### 4. Report
 
 ```
-✓ wrote .ffflow/config.yaml (level=L1, stack=typescript, capture=github-issues)
+✓ wrote .ffflow/config.yaml (level=L1, stack=typescript, capture=github-issues, ffflow_version=0.4.0)
+✓ stamped FFFlow beliefs into CLAUDE.md
 
 Plans live in /tmp/ffflow-plans/<project-hash>/<slug>/ — not in this repo.
 Spec lives under docs/specs/ — created on first use.
@@ -147,6 +186,8 @@ Next steps:
 - Re-running with an existing config: read it, propose **only the changed fields** in the diff, confirm, write.
 - Never silently downgrade a level or strip a feature flag.
 - Don't touch `.ffflow/audit.yaml` even if it exists.
+- Beliefs block: rewrite only between the markers, always. Content outside them is human-owned.
+- Never downgrade `ffflow_version`.
 
 ## Friction addressed
 
@@ -156,7 +197,8 @@ Next steps:
 
 ## Anti-patterns
 
-- Don't write project-level files outside `.ffflow/config.yaml`. Lazy-init everything else.
+- Don't write project-level files outside `.ffflow/config.yaml` and the beliefs block in root `CLAUDE.md`. Lazy-init everything else. (The beliefs block is a bounded, marker-delimited exception — see Outputs. Do not let it become a precedent for writing other project files here.)
+- Don't write the beliefs block *outside* its markers, or rewrite the user's root CLAUDE.md around it. The block is a guest in that file.
 - Don't run `stack-init` automatically — that's a follow-up, not the bootstrap.
 - Don't try to detect L0/L1/L2/L3 from existing files. Always ask. Level is a methodology choice, not a tooling detection.
 - Don't gitignore `plan/`. It doesn't exist in the project tree anymore.

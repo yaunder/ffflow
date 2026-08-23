@@ -4,7 +4,7 @@
 
 CLAUDE.md is machine-first documentation that loads automatically when Claude reads a project. This auditor keeps that documentation honest:
 
-- **Coverage** — every significant directory has a CLAUDE.md or is in the ignore list.
+- **Coverage** — every significant directory has a CLAUDE.md or is in the ignore list. This is the enforcement arm of invariant §2.10 (*hierarchical CLAUDE.md is how the codebase explains itself*), not a stylistic nicety: a repo with one CLAUDE.md is behind on a stated FFFlow belief, not expressing a preference.
 - **Freshness** — code in scope hasn't changed since last validation; not too time-stale.
 - **Sanity** — not too big, not too small, not duplicated, in the right location.
 
@@ -130,6 +130,7 @@ Three templates the `--fix` flow uses. Skeletons only — the auditor fills sect
 ```markdown
 ## Conventions
 
+- **Hierarchical CLAUDE.md:** every significant module carries its own — see the FFFlow beliefs block above. Adding one where it's missing is catching up to the norm, never setting a precedent. Enforced by `/fff:audit --type claude-md`.
 - **Tech debt:** fix nits in-flight (zero-tech-debt) or write `# TODO(re-evaluate when <trigger>): <action>` (yagni). Never "we'll get to it" without a code-level marker. The `/fff:audit --type tech-debt` cartridge scans for violations.
 - **Spec discipline:** see `docs/specs/` for the behavioral contract; updates ship in the same PR as the implementation (see `spec-first-development`).
 - **PR checkpoint:** `/fff:work-issue` pauses after every 2 PRs in a session.
@@ -146,6 +147,7 @@ The templates are intentionally minimal. A 2-line CLAUDE.md is better than none;
 ## Principles
 
 - **2-line CLAUDE.md is better than none.** Context is cheap, confusion is expensive.
+- **Coverage gaps are catch-up, not precedent.** When reporting a missing module CLAUDE.md, never frame it as a new pattern the project might adopt. The hierarchy is invariant §2.10 and it's stated in the project's own beliefs block; the finding is that the repo hasn't caught up yet.
 - **Drift catches code change; age catches surrounding change.** Both matter.
 - **Generation respects what exists.** When regenerating, preserve human-added sections.
 - **Pure dispatch from `audit`.** This skill doesn't decide whether to run; that's the coordinator's job.
@@ -155,6 +157,7 @@ The templates are intentionally minimal. A 2-line CLAUDE.md is better than none;
 - Auto-writing CLAUDE.md content for directories the user explicitly excluded.
 - Treating every directory as significant. Drowning the project in 2-line CLAUDE.md files dilutes the signal.
 - Surfacing every CLAUDE.md as "stale" when a single unrelated file changed in scope. Filter by what's actually in scope.
+- Reporting a coverage gap as "this would be the repo's first nested CLAUDE.md, so it sets a precedent." The precedent was set by FFFlow before the repo existed. Report it as a gap against a known convention.
 - Generating content that contradicts the spec. If a CLAUDE.md template would lie ("uses JWT" when the project uses sessions), flag instead of writing.
 
 ## Friction addressed

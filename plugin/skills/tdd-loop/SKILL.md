@@ -102,7 +102,18 @@ auth: reject passwords < 8 chars (@RID-PWD-001)
 
 ## When tests can't be written first
 
-Exceptions exist. Note in the PR body when the loop is abridged and why.
+Red-then-green is the default and covers the overwhelming majority of work. A few edges genuinely resist it:
+
+- **Exploratory spikes.** You don't yet know what the behavior *should* be. Spike freely, then throw the spike away and rebuild it red-first. The spike is research, not an increment.
+- **Config, scaffolding, and pure wiring.** No behavior of its own to pin. Don't manufacture a test that asserts a config file exists.
+- **I/O that has no seam yet.** The test needs an interface that doesn't exist. Usually the honest move is to make "build the seam" its own chess move rather than abridging the loop.
+- **A defect you can't reproduce.** Reproduce first if you possibly can — that's what `defect-driven-specification` is for. When you truly can't, pin what you *can* observe and say what remains unpinned.
+
+**Name the exception; don't take it silently.** When the loop is abridged, note it in the PR body — which edge applied, and what you did instead. If the gap is durable (a seam that still doesn't exist, a defect still unreproduced), it belongs in the spec entry too, not just the PR.
+
+The discipline doesn't erode because someone skipped red once with a good reason. It erodes when skipping stops being remarkable.
+
+**"Hard to test" is not on this list.** A test that's difficult to write is usually reporting something true about the design — coupling, a missing seam, a function doing three jobs. That signal is most of TDD's value, and reaching for the exception throws it away. Inconvenient is not impractical.
 
 ## Anti-patterns
 
@@ -110,6 +121,8 @@ Exceptions exist. Note in the PR body when the loop is abridged and why.
 - Skipping the red step "because I'm confident." Red is the confirmation that the test actually tests something.
 - Refactoring while tests are red. Always restore green first.
 - Bundling multiple behaviors in one test. Hard to read, hard to fix when it fails.
+- Claiming an exception because the test was awkward to write. Awkwardness is design feedback (see above), not an exemption.
+- Abridging the loop without saying so. An unrecorded exception is indistinguishable from not knowing the discipline.
 - Letting test coverage drift without updating the spec. Every new test should map to a spec entry — if it doesn't, the spec is incomplete.
 
 ## How `work-issue` uses this skill

@@ -16,6 +16,8 @@ This skill **delegates**. It doesn't reimplement any step — it composes `init-
 - Day one on a new project.
 - First time adopting FFFlow on an existing project.
 
+**Not** for a project already on FFFlow that needs to catch up with a newer plugin version — that's `/fff:upgrade-ffflow`. Adoption onboards; upgrade reconciles.
+
 ## Inputs
 
 - Current working directory.

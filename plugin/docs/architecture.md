@@ -85,6 +85,17 @@ Every chess move executed by `work-issue` follows this loop:
 
 At L0/L1 this is standard TDD. At L2 the test is a Gherkin scenario. At L3 the audit verifies the loop's completeness. The loop is the same; the artifacts scale.
 
+**Wherever it's practical — and the exceptions are named, not silent.** Red-then-green is the default and the overwhelming majority case, but some work genuinely resists a failing-test-first opening:
+
+- **Exploratory spikes**, where the point is to learn what the behavior should even be. Spike, then throw it away and do it properly red-first.
+- **Config, scaffolding, and pure wiring** with no behavior of its own to pin.
+- **I/O that can't be harnessed yet** — the test needs a seam that doesn't exist. Often the honest move is a chess move that builds the seam first.
+- **A defect you can't reproduce yet.** Reproduce first if you possibly can (`defect-driven-specification` exists for exactly this); when you truly can't, characterize what you *can* observe.
+
+When a step lands on one of these edges, **say so and say what you did instead** — in the PR description, and in the spec entry if the gap is durable. The discipline doesn't erode because someone skipped red once with a reason; it erodes because skipping stopped being remarkable. An acknowledged exception is a data point. A silent one is decay.
+
+This is the one place where "wherever practical" is a real qualifier rather than a hedge — it does *not* license reaching for the exception when the test is merely inconvenient to write. A test that's hard to write is usually telling you something true about the design (§ `refactor`), and that signal is most of TDD's value.
+
 ### 2.7 Naming convention: memorable prefix first
 
 Skill names are typeahead-friendly. The most distinctive word comes first.
@@ -113,6 +124,44 @@ Four consequences, which the `component-driven-ui` rulebook makes concrete:
 
 Like hexagonal, this is a **dial, not an absolute** (§2.4): encouraged at L0, recommended at L1, CI-enforced at L2, blocking with coverage + token-conformance gates at L3. Enforced by `/audit --type ui`; the ordering gate lives in `work-issue`.
 
+### 2.10 Hierarchical CLAUDE.md is how the codebase explains itself
+
+**Every significant module carries its own CLAUDE.md.** Not the root file alone — a tree of them, mirroring the module tree. This is not a stylistic preference or an emergent precedent that a repo may or may not have set. It is load-bearing infrastructure, and it is the single highest-leverage thing an FFFlow project does for the sessions that work in it.
+
+The reasoning is mechanical, not aesthetic. Claude Code loads CLAUDE.md files by proximity to the work: a session editing `src/payment/refund.ts` gets `src/payment/CLAUDE.md` in context automatically, without searching, without being told, without spending a single tool call. That is a **context-routing mechanism**, and it is the only one that operates before the model has decided what to look at. Conventions that live in a module's CLAUDE.md are enforced by default. The same conventions written as prose in the root file are diluted by everything else in that file; written in a skill, they load only when someone invokes the skill; written in a code comment, they are found only by whoever already opened the right file.
+
+So the hierarchy is what converts documentation from *retrievable* into *unavoidable*:
+
+1. **Locality beats volume.** A 40-line module CLAUDE.md next to the code outperforms 400 lines in the root, because it arrives without being asked for and carries no unrelated noise.
+2. **The root file stays a map, not an encyclopedia.** Root owns purpose, architecture overview, module index, stack, and the beliefs block (§2.11). Module-specific rules belong to the module. Without the hierarchy, the root file grows until it is too big to be read carefully — and the audit cartridge's 500-line sanity check starts firing.
+3. **Scoped freshness becomes possible.** `.ffflow/audit.yaml` pins each CLAUDE.md to a commit and a path scope. Drift on `src/auth/**` invalidates `src/auth/CLAUDE.md` and nothing else. One monolithic root file has one scope — `**/*` — so *every* change makes it stale, which makes staleness meaningless.
+4. **It is the spec's habitat at L0/L1.** §2.1 names per-module CLAUDE.md as a legitimate spec location. At lower levels it is often the *only* one. No hierarchy, no place for the spec to live.
+
+**A 2-line CLAUDE.md is better than none.** Context is cheap; a session guessing at conventions is expensive. The failure mode this invariant exists to prevent is not an under-documented module — it is a session declaring a convention "unprecedented" because the repo never told it otherwise, and then setting a *different* precedent.
+
+Enforced by `/audit --type claude-md` (coverage gaps in a top-level module are **high** severity). Seeded by `init-ffflow`, extended by `stack-init` and `work-issue` when they create new modules, and retrofitted by `upgrade-ffflow`. Like every FFFlow rule it scales with the dial (§2.4) — advisory at L0, expected at L1, audited in CI at L2, blocking at L3 — but unlike most, its *floor* is non-zero at every level: the root CLAUDE.md and the beliefs block are required even at L0.
+
+### 2.11 Beliefs are stamped into the project, not just professed by the plugin
+
+A methodology the plugin believes in but the repo never states is **not in effect**. Sessions working in a downstream project read *that project's* CLAUDE.md; they do not read this plugin's design docs. Every invariant above is therefore invisible at the moment it matters unless the project itself says it out loud.
+
+So `init-ffflow` stamps a **managed beliefs block** into the project's root CLAUDE.md, delimited by markers:
+
+```markdown
+<!-- ffflow:beliefs v0.4.0 — managed by /fff:upgrade-ffflow. Edits inside this block are overwritten. -->
+## FFFlow beliefs
+...
+<!-- ffflow:beliefs end -->
+```
+
+Three properties make this work:
+
+- **Machine-owned, idempotent region.** `upgrade-ffflow` rewrites what is between the markers and never touches a byte outside them. The rest of the root CLAUDE.md belongs entirely to the humans and to `/audit --type claude-md`.
+- **Versioned.** The marker carries the FFFlow version that wrote it, so drift between a repo's stated beliefs and the current methodology is detectable by string comparison, not inference.
+- **Named enforcement.** Every belief names the skill that enforces it. A belief with no enforcer is a slogan; a belief with an enforcer is a contract the session can act on.
+
+The block states the non-negotiables only — the rules a session must not have to discover. It is deliberately short. A beliefs block that grows into a second architecture document defeats its own purpose, because it stops being read.
+
 ---
 
 ## 3. Plugin Layout
@@ -130,9 +179,11 @@ ffflow-plugin/                         # repo root (also the marketplace)
     │   ├── architecture.md            # Build spec (this file)
     │   ├── levels.md                  # The L0–L3 dial explained
     │   ├── workflows.md               # Lifecycle flows
-    │   └── audit.md                   # Audit subsystem
+    │   ├── audit.md                   # Audit subsystem
+    │   └── migrations.md              # Migration ledger read by upgrade-ffflow
     └── skills/
         ├── init-ffflow/               # Setup
+        ├── upgrade-ffflow/            # Reconcile a project against the current plugin version
         ├── plan-roadmap/              # Tier-1 planning: phase out a vision or large capability
         ├── plan-chat/                 # Tier-2 planning: design one slice (resolves all open decisions inline)
         ├── plan-breakdown/            # Cut plans into chess moves
@@ -182,7 +233,9 @@ ffflow-plugin/                         # repo root (also the marketplace)
 Created by `init-ffflow`. Single source of truth for project-level FFFlow state.
 
 ```yaml
-version: 1
+version: 1                             # config *schema* version (not the plugin version)
+ffflow_version: 0.4.0                  # plugin version this repo was last reconciled against
+ffflow_upgraded: 2026-08-23            # date of that reconciliation
 level: L1                              # L0 | L1 | L2 | L3
 stack: typescript                      # references stack skill
 capture: github-issues                 # references capture skill
@@ -199,6 +252,10 @@ features:
   rid_traceability: false              # L3
   four_quality_gates: false            # L3
 ```
+
+**Two version fields, deliberately distinct.** `version` is the schema version of this file — bump it only when the config's *shape* changes in a way that needs migration logic. `ffflow_version` is the **plugin version the repo was last reconciled against**, written by `init-ffflow` on bootstrap and re-written by `upgrade-ffflow` after a successful upgrade run. They move independently: most plugin releases change methodology without changing the config shape.
+
+**A missing `ffflow_version` means "pre-0.4.0, exact version unknown."** Stamping began in 0.4.0, so any repo adopted before it has no stamp. This is not an error state — `upgrade-ffflow` handles it by duck-typing (§ the `upgrade-ffflow` skill): it walks every migration entry from 0.1.0 forward, runs each entry's detection heuristic against the repo, infers which changes already landed, and applies only the genuine gaps. The unstamped case is expected, supported, and self-healing — it happens exactly once per repo.
 
 ### 4.2 `.ffflow/audit.yaml`
 
@@ -608,6 +665,7 @@ Folded into one `justfile` skill with tier cartridges. Folds aug-just in as FFFl
 
 ### 5.12 Onboarding
 
+- `upgrade-ffflow` — Reconcile an already-adopted project against the current plugin version. Reads `ffflow_version` from `.ffflow/config.yaml`, walks `docs/migrations.md`, duck-types unstamped (pre-0.4.0) repos from repo evidence, applies gaps by delegating to the owning skill, re-stamps last. Complements `adopt-ffflow`: adoption onboards, upgrade catches up.
 - `adopt-ffflow` — End-to-end onboarding for a new ffflow project. Greenfield: runs `init-ffflow` then suggests next steps. Brownfield: runs `init-ffflow`, then `characterize`, then helps queue up the test-backfill work.
 
 ---
@@ -620,6 +678,7 @@ The lifecycle flows the plugin supports.
 
 ```
 init-ffflow             — declare level, stack, capture backend
+upgrade-ffflow          — catch an existing project up to the current plugin version
 characterize            — interactive walk; produces spec (committed) + plan (for test backfill)
 plan-breakdown          — cut test-backfill plan into per-module tasks
 plan-capture            — write tasks to issue tracker
@@ -774,6 +833,7 @@ Each documented friction pattern from the chat-history analysis maps to a concre
 | Weekly "spin up an agent team in worktrees" retype | `work-fanout` |
 | Plans lost after `/clear` | `<plan-dir>/` directory; resumability (§7.7) |
 | CLAUDE.md drift | `/audit --type claude-md` |
+| Just updated the plugin | `/upgrade-ffflow` |
 | Specs falling behind code | `/audit --type spec` + `/audit --type char-tests` |
 | Architectural drift | `/audit --type architecture` |
 | Refactoring backlog invisibility | `/audit --type refactor` |
