@@ -8,6 +8,11 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/); versionin
 
 ---
 
+## [0.4.1] — 2026-09-06
+
+### Fixed
+- **`work-issue` no longer instructs agents to stamp `.ffflow/audit.yaml`.** The skill's Outputs list said to update the file "if any audited file is touched" — but a stamp means an auditor validated the file, not that its editor touched it. Since `work-issue` runs on nearly every leaf task, that line meant every ordinary PR was self-certifying its own changes into the one record that's supposed to be independent of the author. Reported from a downstream project where 9 of 10 `audit.yaml`-touching commits were self-stamps and only 1 was a real audit run. The invariant — "`audit.yaml` is written by auditors only; an editor never stamps its own work" — is now stated explicitly in `audit/SKILL.md`. `characterize` writing `characterized: true` for spec entries it just authored remains the one sanctioned exception (that's an auditor-shaped act, not self-certification of a code change).
+
 ## [0.4.0] — 2026-08-23
 
 ### Added

@@ -11,6 +11,8 @@ Dispatch + aggregate + render. Runs the per-type auditors that apply to this pro
 
 The coordinator does no auditing itself — every finding originates from a per-type auditor. Aggregation and report rendering are the only logic this skill owns.
 
+**Invariant: `audit.yaml` is written by auditors only. An editor never stamps its own work.** A stamp means an auditor read the file at commit X and found it true — that's what makes it worth more than the author's own say-so. Any other skill that touches an audited file leaves the stamp alone; going stale is the correct, visible state until the next `/fff:audit` re-validates it. The one sanctioned exception is `characterize`, which registers `characterized: true` for spec entries it just wrote — that's an auditor-shaped act (declaring new audit surface), not self-certification of a code change.
+
 ## Inputs
 
 - `.ffflow/config.yaml` — level, stack, audit config file path.

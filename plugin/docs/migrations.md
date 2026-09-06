@@ -215,3 +215,47 @@ Each entry is one repo-affecting change. Entries are ordered oldest-first within
     and the Conventions duplicate can be trimmed.
   autonomous: false
 ```
+
+### 0.4.1 — audit.yaml is written by auditors only
+
+```yaml
+- id: work-issue-no-self-stamp
+  version: 0.4.1
+  title: work-issue no longer instructs agents to stamp audit.yaml
+  applies_when: always
+  severity: high
+  detect: |
+    Two things to check:
+    1. Does `.ffflow/audit.yaml` exist with commits recorded in it? For each
+       recorded `last_pass_commit` (or equivalent per-file stamp), check
+       whether that commit's message/diff looks like an ordinary feature/fix
+       PR rather than an `/fff:audit` run (no audit report in the PR body, and
+       the changed files are the stamped files themselves, not audit tooling).
+       Any such commit is a self-certifying stamp — evidence nobody but the
+       author validated it.
+    2. This is a doc/instruction bug, not a schema change — there is nothing
+       to detect in `.ffflow/config.yaml` or skill files themselves once the
+       plugin is updated. The gap lives entirely in `audit.yaml`'s *content*,
+       written under the old (pre-0.4.1) `work-issue` instruction.
+  remediate: |
+    Do not silently rewrite the file. Self-certifying stamps mean the recorded
+    `validated_at` / `last_pass_commit` for those files is unreliable — the
+    file was likely edited by ordinary work after being stamped, or the stamp
+    itself was never backed by an actual audit run.
+
+    Show the user the list of suspect entries and recommend running
+    `/fff:audit --type <affected>` to re-validate for real and overwrite the
+    bogus stamps with a genuine one. Do not hand-edit `audit.yaml` yourself —
+    only an auditor cartridge writes that file.
+
+    Cause: pre-0.4.1 `work-issue` (`SKILL.md` Outputs list) told agents to
+    update `.ffflow/audit.yaml` "if any audited file is touched." That
+    inverted the file's meaning — a stamp is supposed to mean an auditor
+    validated the file, not that its own editor touched it. Fixed by removing
+    the line and stating the invariant explicitly in `audit/SKILL.md`:
+    "audit.yaml is written by auditors only. An editor never stamps its own
+    work." The one sanctioned exception is `characterize`, which registers
+    `characterized: true` for spec entries it just wrote — an auditor-shaped
+    act, not self-certification of a code change.
+  autonomous: false
+```

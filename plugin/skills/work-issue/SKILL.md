@@ -24,7 +24,7 @@ Take one captured issue (or task file) from cold-start to a PR. The spec change 
 - A PR (draft or ready, depending on local-validation results).
 - Spec updates committed in the same PR.
 - Module CLAUDE.md created or updated in the same PR when the change adds or reshapes a module.
-- Updated `.ffflow/audit.yaml` if any audited file is touched.
+- **Not** `.ffflow/audit.yaml` — this skill never writes it, even when it touches an audited file. Stamping is `/fff:audit`'s job; an editor stamping its own commit is self-certification, which is the exact failure the stamp exists to rule out. Editing an audited file legitimately makes it stale — that's for the next `/fff:audit` to discover, not to be pre-empted here.
 
 ## Dependencies
 
