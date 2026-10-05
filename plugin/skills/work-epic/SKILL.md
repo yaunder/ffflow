@@ -21,7 +21,7 @@ For one PR per issue: `/work-issue`. For multiple parallel PRs: `/work-fanout`.
 
 ## Inputs
 
-- An epic identifier (`/work-epic E0.1` or `/work-epic 100` for a GitHub umbrella issue number).
+- An epic identifier. For the GitHub backend this is the **epic/umbrella issue number** (`/work-epic 100`), and it is what `<epic-id>` resolves to everywhere below: the task label is `epic-<epic-id>`, the branch is `epic/<epic-id>`. (Non-GitHub backends pass their epic-equivalent id, e.g. `E0.1`.)
 - `.ffflow/config.yaml` — read for level, stack, capture backend.
 
 ## Outputs
@@ -43,7 +43,9 @@ These are non-negotiable.
 
 ### Issue ordering
 
-GitHub issue numbers are out of order (parallel agents created them). The **titles** are ground truth — they encode `<epic> T<N>` (e.g. `E0.1 T1`, `E0.1 T2`). Always sort by title, never by issue number. Use a natural sort on the `T<N>` prefix so `T10` comes after `T2`.
+GitHub issue numbers are out of order (parallel agents created them), and `plan-capture` gives task issues **plain human titles — no `T<N>` or epic prefix**. So neither the number nor the title encodes execution order; do not invent a title sort.
+
+The ground truth is the **epic issue's task checklist**: `plan-capture` writes the tasks into the epic body in dependency-respecting order (one line per task referencing `#<n>`). That order is the execution order. Cross-check membership and open/closed state against the `epic-<epic-id>` label query (dash, not colon).
 
 ### Implement and review never share a subagent
 
@@ -57,14 +59,24 @@ This skill never merges. Even green PRs sit until the user approves. Step 7 (pos
 
 ### Step 1 — Resolve tasks
 
-For GitHub backend:
-```bash
-gh issue list --label "epic-<epic-id>" --state open --limit 100 --json number,title,labels
-```
+The argument is the epic/umbrella issue number. For the GitHub backend:
 
-For other backends, equivalent query via the active capture cartridge.
+1. Read the epic issue — this gives both the ordered task checklist and the epic title/body (reused in Step 4, so no later search is needed):
+   ```bash
+   gh issue view <epic-id> --json number,title,body
+   ```
+   From the body's task list, take the `#<n>` references in the order they appear. That order is the execution order (`plan-capture` writes them dependency-respecting).
 
-Parse, extract the `T<N>` from each title, sort numerically. **Print the resolved task list** (issue # + title in execution order) to the user before doing anything destructive. If zero issues found, stop and ask.
+2. Confirm membership and open/closed state via the task label (dash, not colon):
+   ```bash
+   gh issue list --label "epic-<epic-id>" --state all --limit 100 --json number,title,state
+   ```
+
+3. Reconcile: execute the **open** tasks in checklist order. If a labelled task is absent from the checklist, or the checklist references an issue the label query doesn't return, stop and report the mismatch — don't guess an order.
+
+For other backends, do the equivalent via the active capture cartridge: the epic-equivalent's ordered task list is ground truth.
+
+**Print the resolved task list** (issue # + title in execution order) to the user before doing anything destructive. If zero tasks resolve, stop and ask.
 
 ### Step 2 — Branch
 
@@ -76,7 +88,7 @@ If the branch already exists, stop and ask whether to resume on it or recreate.
 
 ### Step 3 — Per-task loop (sequential, in title order)
 
-For each task `T<N>` (issue `#NN`):
+For each task (in checklist order, issue `#NN`):
 
 #### 3a. Capture starting SHA
 
@@ -124,13 +136,13 @@ Push and open the PR:
 
 ```bash
 git push -u origin epic/<epic-id>
-gh pr create --base main --title "Epic <epic-id> — <epic title>" --body "$(cat <<'EOF'
+gh pr create --base main --title "<epic issue title>" --body "$(cat <<'EOF'
 ## Summary
 <one-paragraph epic summary>
 
 ## Tasks
-- T1 — <title> (#NN)
-- T2 — <title> (#NN)
+- <title> (#NN)
+- <title> (#NN)
 
 ## Test plan
 - [ ] <item>
@@ -138,18 +150,14 @@ EOF
 )"
 ```
 
-Pull the epic's title and description from the umbrella issue. For GitHub:
-```bash
-gh issue list --search "Epic <epic-id>" --state all --json number,title,body --limit 5
-```
-Pick the one whose title starts with `Epic <epic-id> — …`. Use its title for the PR title and its body as the basis for the PR Summary.
+Reuse the epic issue's title and body from Step 1 (`gh issue view <epic-id>` already returned them — no search needed). `plan-capture` titles the epic `Epic: <plan title>`; use that verbatim as the PR title and its body as the basis for the PR Summary.
 
 ### Step 5 — Holistic epic review (subagent)
 
 Spawn one more fresh subagent:
 
 - Review PR #<num> against the acceptance criteria for the epic **as a whole**.
-- Pull the epic AC from the umbrella issue resolved in Step 4.
+- Pull the epic AC from the epic issue resolved in Step 1.
 - Verify each task's AC is met **and** the tasks integrate cleanly.
 - Return `PASS` or specific fixes.
 
@@ -203,7 +211,7 @@ Once the PR has merged (the user either merged themselves or asked you to merge 
 
 ## Anti-patterns
 
-- Sorting by issue number instead of title. Title order is ground truth.
+- Sorting by issue number or title. Neither encodes order — the epic issue's task checklist does.
 - Skipping the holistic Step 5 review. Per-task reviews miss integration issues.
 - Squashing before review passes. Lose the intermediate commits before they've been judged.
 - Merging without user approval. Even if PR is green.

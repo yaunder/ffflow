@@ -64,7 +64,17 @@ Per phase, the cartridge creates a phase-epic issue holding the phase's tasks. P
 
 ### Update epic with real issue numbers
 
-After all task issues exist:
+After all task issues exist, patch the epic body's task list with the real issue numbers. This list is the **canonical execution order** `work-epic` reads — one line per task, in dependency order (the order task files were passed in), format:
+
+```markdown
+## Tasks
+- [ ] #101 — Add password complexity validator
+- [ ] #102 — Wire password validator into signup adapter
+- [ ] #103 — Update CLI auth flow
+```
+
+Keep tasks in order and one per line; `work-epic` takes the `#<n>` references top-to-bottom as the execution order, so do not reorder on edit.
+
 ```bash
 gh issue edit <epic-id> --body "<patched body with real #s>"
 ```

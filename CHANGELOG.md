@@ -8,6 +8,12 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/); versionin
 
 ---
 
+## [0.4.2] — 2026-10-05
+
+### Fixed
+- **`work-epic` no longer assumes a `T<N>` task-title scheme that `plan-capture` never produces.** The skill's central "Issue ordering" invariant claimed task titles encode `<epic> T<N>` and told the runner to sort on that prefix — but `plan-breakdown`/`plan-capture` give task issues plain human titles with no prefix. A real `/work-epic` run surfaced the drift: the label query found the tasks, the title sort found no `T<N>`, and the agent had to rediscover from scratch that the epic issue's checklist is the real order. The epic issue's **task checklist** is now stated as the ground-truth execution order (`plan-capture` writes tasks there dependency-ordered); the `epic-<epic-id>` label query is the membership/state cross-check. The GitHub cartridge now pins the canonical epic checklist format (`- [ ] #<n> — <title>`, one per line, in order) so the producer/consumer contract is explicit on both ends.
+- **`work-epic` Step 1/4 no longer re-derive the epic by title search.** Step 1 reads the epic with `gh issue view <epic-id>` (the argument *is* the umbrella issue number) and reuses its title/body in Step 4, replacing a brittle `gh issue list --search "Epic <id>"` that assumed an `Epic <id> — …` title the cartridge doesn't emit (it creates `Epic: <plan title>`). Inputs now state that `<epic-id>` is the epic/umbrella issue number and the label separator is a dash.
+
 ## [0.4.1] — 2026-09-06
 
 ### Fixed
