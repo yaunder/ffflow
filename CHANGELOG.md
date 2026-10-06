@@ -11,6 +11,7 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/); versionin
 ## [0.4.2] — 2026-10-05
 
 ### Fixed
+- **`work-epic` now resolves the umbrella issue directly by number when opening an epic PR.** Step 4 uses `gh issue view <epic-id>` instead of searching for a title format that `plan-capture` never emits, so the PR title and summary reliably come from the correct epic.
 - **`work-epic` now queries the task label format emitted by `plan-capture`.** Task discovery uses `epic-<epic-id>` instead of the mismatched `epic:<epic-id>`, so captured tasks are found correctly.
 - **`plan-capture` now burns the execution ordinal into generated task-issue titles, honoring `work-epic`'s ordering invariant.** `work-epic` treats issue *titles* as the ground truth for execution order (sort by the `T<N>` prefix, never by issue number), but the GitHub capture cartridge created tasks with `--title "<task title>"` — no ordinal — so a real `/fff:work-epic` run found no `T<N>` to sort on and had to reconstruct the order by hand. The producer was never honoring the invariant. Task titles now carry the ordinal as `T<N> — <title>` for both roadmap and single-slice plans. `<N>` is the task's 1-based position in the phase's dependency-ordered list.
 - **Capture-time guardrail.** `plan-capture` (and the github-issues cartridge) now verify every created/updated task title matches `^T\d+ — ` and refuse — reporting the offenders — if any lack it, so generation can't silently regress to unordered titles.

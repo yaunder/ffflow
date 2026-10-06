@@ -144,9 +144,9 @@ EOF
 
 Pull the epic's title and description from the umbrella issue. For GitHub:
 ```bash
-gh issue list --search "Epic <epic-id>" --state all --json number,title,body --limit 5
+gh issue view <epic-id> --json title,body
 ```
-Pick the one whose title starts with `Epic <epic-id> — …`. Use its title for the PR title and its body as the basis for the PR Summary.
+Use the returned title (without a leading `Epic: `, if present) as `<epic title>` in the PR title. Use the returned body as the basis for the PR Summary. The issue number identifies the umbrella issue directly; do not search by title format.
 
 ### Step 5 — Holistic epic review (subagent)
 
