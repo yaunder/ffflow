@@ -128,6 +128,7 @@ PPP doesn't depend on fff; a converged PRD can feed any planning step, including
 - [Audit subsystem](plugin/docs/audit.md) — the keep-honest layer
 - [Migration ledger](plugin/docs/migrations.md) — what `/fff:upgrade-ffflow` reads
 - [Changelog](CHANGELOG.md) — fff release history and catalog notes
+- [Skill evaluation roadmap](docs/roadmap/skill-evals/roadmap.md) — Yaunder fork proposal for bounded Claude Code checks on real GitHub, using session logs and six recent-regression scenarios
 - [PPP design](ppp/CLAUDE.md) — what the ppp plugin is and its invariants
 - [PPP process](ppp/process.md) — the process contract every `/ppp:` skill implements
 - [PPP media](ppp/media.md) — where a bundle can live; the worked example
